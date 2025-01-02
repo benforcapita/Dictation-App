@@ -9,12 +9,15 @@ import { NotesDrawer } from "@/components/NotesDrawer";
 import { LatestNote } from "@/components/LatestNote";
 import { Loader } from "@/components/Loader";
 
-// Common audio formats that work well with OpenAI Whisper
+// Common audio formats with better iOS support
 const PREFERRED_MIME_TYPES = [
-  'audio/webm',
-  'audio/wav',
-  'audio/mp3',
-  'audio/mpeg'
+  'audio/mp4',           // iOS preferred
+  'audio/m4a',           // iOS alternative
+  'audio/aac',           // iOS fallback
+  'audio/webm',          // Modern browsers
+  'audio/wav',           // Wide support
+  'audio/mpeg',          // Fallback
+  ''                     // Let browser choose format
 ];
 
 export default function Home() {
@@ -27,9 +30,9 @@ export default function Home() {
 
   useEffect(() => {
     // Log supported MIME types
-    console.log("Supported MIME types:");
+    console.log("Testing MIME type support:");
     PREFERRED_MIME_TYPES.forEach(type => {
-      console.log(`${type}: ${MediaRecorder.isTypeSupported(type)}`);
+      console.log(`${type}: ${type ? MediaRecorder.isTypeSupported(type) : 'default'}`);
     });
     setNotes(loadNotes());
   }, []);
@@ -46,21 +49,24 @@ export default function Home() {
 
       // Request microphone permission
       console.log("Requesting microphone access...");
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          channelCount: 1,          // Mono audio for better compatibility
+          sampleRate: 44100,        // Standard sample rate
+          echoCancellation: true,   // Reduce echo
+          noiseSuppression: true    // Reduce background noise
+        } 
+      });
       console.log("Microphone access granted");
       
       // Find the first supported MIME type
-      const mimeType = PREFERRED_MIME_TYPES.find(type => MediaRecorder.isTypeSupported(type));
-      if (!mimeType) {
-        throw new Error("No supported audio MIME types found");
-      }
-
-      console.log("Selected MIME type:", mimeType);
+      const mimeType = PREFERRED_MIME_TYPES.find(type => !type || MediaRecorder.isTypeSupported(type)) || '';
+      console.log("Selected MIME type:", mimeType || 'browser default');
       
-      const recorder = new MediaRecorder(stream, { 
+      const recorder = new MediaRecorder(stream, mimeType ? { 
         mimeType,
         audioBitsPerSecond: 128000 // Set to 128kbps for better quality
-      });
+      } : undefined);
       
       // Set up event handlers before starting
       recorder.ondataavailable = (event) => {
