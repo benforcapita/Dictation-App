@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30; // Increase timeout for large files
 
-const SUPPORTED_AUDIO_FORMATS = ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm'];
+// Updated list of supported formats including iOS formats
+const SUPPORTED_AUDIO_FORMATS = [
+  'mp4', 'm4a', 'aac',  // iOS formats
+  'webm', 'wav', 'mp3', 'mpeg', 
+  'flac', 'ogg', 'oga', 'mpga'
+];
+
+const SUPPORTED_MIME_TYPES = [
+  'audio/mp4', 'audio/x-m4a', 'audio/aac',
+  'audio/webm', 'audio/wav', 'audio/mpeg',
+  'audio/flac', 'audio/ogg', 'application/ogg',
+  'audio/mp3', 'video/mp4', 'video/webm'
+];
 
 export async function POST(req: NextRequest) {
   console.log("Transcribe API route called");
@@ -33,75 +46,70 @@ export async function POST(req: NextRequest) {
       size: audioFile.size
     });
 
-    // Check file format
+    // More lenient format checking
     const fileExtension = audioFile.name.split('.').pop()?.toLowerCase();
-    if (!fileExtension || !SUPPORTED_AUDIO_FORMATS.includes(fileExtension)) {
+    const mimeType = audioFile.type.toLowerCase();
+
+    const isValidFormat = 
+      SUPPORTED_AUDIO_FORMATS.includes(fileExtension || '') ||
+      SUPPORTED_MIME_TYPES.includes(mimeType);
+
+    if (!isValidFormat) {
       console.error("Invalid file format:", {
         extension: fileExtension,
-        supportedFormats: SUPPORTED_AUDIO_FORMATS
+        mimeType: mimeType,
+        supportedFormats: SUPPORTED_AUDIO_FORMATS,
+        supportedMimeTypes: SUPPORTED_MIME_TYPES
       });
       return NextResponse.json(
         { 
           error: `Invalid file format. Supported formats: ${SUPPORTED_AUDIO_FORMATS.join(', ')}`,
           supportedFormats: SUPPORTED_AUDIO_FORMATS,
+          supportedMimeTypes: SUPPORTED_MIME_TYPES,
           receivedFormat: {
             extension: fileExtension,
-            mimeType: audioFile.type
+            mimeType: mimeType
           }
         },
         { status: 400 }
       );
     }
 
-    // Create a new FormData instance for the OpenAI API
-    const openAIFormData = new FormData();
-    openAIFormData.append("file", audioFile);
-    openAIFormData.append("model", "whisper-1");
+    // Convert File to Blob for OpenAI API
+    const audioBlob = await audioFile.arrayBuffer().then(buffer => new Blob([buffer], { type: audioFile.type }));
 
-    console.log("Sending request to OpenAI:", {
-      url: "https://api.openai.com/v1/audio/transcriptions",
-      fileName: audioFile.name,
-      fileType: audioFile.type,
-      fileSize: audioFile.size,
-      model: "whisper-1"
+    // Create form data for OpenAI API
+    const openAIFormData = new FormData();
+    openAIFormData.append("file", audioBlob, "audio." + (fileExtension || 'mp4'));
+    openAIFormData.append("model", "whisper-1");
+    openAIFormData.append("language", "en");
+
+    console.log("Sending request to OpenAI");
+    const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: openAIFormData,
     });
 
-    const response = await fetch(
-      "https://api.openai.com/v1/audio/transcriptions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: openAIFormData,
-      }
-    );
-
-    console.log("OpenAI response status:", response.status);
-    const responseData = await response.text();
-    console.log("OpenAI raw response:", responseData);
-
     if (!response.ok) {
-      let errorData;
-      try {
-        errorData = JSON.parse(responseData);
-      } catch (e) {
-        console.error("Failed to parse OpenAI error response:", e);
-        errorData = { error: { message: "Unknown error occurred" } };
-      }
-      console.error("OpenAI API Error:", errorData);
-      throw new Error(
-        `Transcription failed: ${response.status} ${response.statusText}`
+      const error = await response.text();
+      console.error("OpenAI API error:", error);
+      return NextResponse.json(
+        { error: "Failed to transcribe audio" },
+        { status: response.status }
       );
     }
 
-    const data = JSON.parse(responseData);
-    console.log("OpenAI success response:", data);
-    return NextResponse.json({ text: data.text });
+    const data = await response.json();
+    console.log("Transcription successful");
+    
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Transcription error:", error);
+    console.error("Error processing request:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to transcribe audio" },
+      { error: "Failed to process audio file" },
       { status: 500 }
     );
   }
