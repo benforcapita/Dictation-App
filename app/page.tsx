@@ -86,7 +86,7 @@ export default function Home() {
 
       // Log available MIME types
       console.log("[MIME_TYPES] Testing MIME type support:");
-      const mimeTypeSupport = {};
+      const mimeTypeSupport: Record<string, boolean | string> = {};
       PREFERRED_MIME_TYPES.forEach(type => {
         mimeTypeSupport[type] = type ? MediaRecorder.isTypeSupported(type) : 'default';
       });
@@ -161,10 +161,11 @@ export default function Home() {
 
         const formData = new FormData();
         formData.append("file", audioBlob, `audio.${mimeType ? mimeType.split('/')[1] : 'mp4'}`);
+        const fileEntry = formData.get("file") as File;
         console.log("[FORM_DATA] Created with file:", {
-          fileName: formData.get("file")?.['name'],
-          fileType: formData.get("file")?.['type'],
-          fileSize: formData.get("file")?.['size']
+          fileName: fileEntry?.name,
+          fileType: fileEntry?.type,
+          fileSize: fileEntry?.size
         });
 
         setIsProcessing(true);
