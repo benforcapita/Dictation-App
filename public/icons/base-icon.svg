@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background circle -->
+    <circle cx="256" cy="256" r="240" fill="#ef4444"/>
+    <!-- Inner microphone icon -->
+    <path d="M256 320c35.2 0 64-28.8 64-64V160c0-35.2-28.8-64-64-64s-64 28.8-64 64v96c0 35.2 28.8 64 64 64zm96-64c0 53-43 96-96 96s-96-43-96-96h-32c0 62.8 51.2 114 112 114v42h32v-42c60.8 0 112-51.2 112-114h-32z" fill="white"/>
+</svg>
