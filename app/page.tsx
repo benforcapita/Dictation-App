@@ -7,6 +7,7 @@ import { loadNotes, saveNotes, clearNotes } from "@/lib/storage";
 import { RecordButton } from "@/components/RecordButton";
 import { NotesDrawer } from "@/components/NotesDrawer";
 import { LatestNote } from "@/components/LatestNote";
+import { Loader } from "@/components/Loader";
 
 // Common audio formats that work well with OpenAI Whisper
 const PREFERRED_MIME_TYPES = [
@@ -18,6 +19,7 @@ const PREFERRED_MIME_TYPES = [
 
 export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -106,6 +108,7 @@ export default function Home() {
         const formData = new FormData();
         formData.append("file", audioBlob, "audio.webm");
 
+        setIsProcessing(true);
         console.log("Preparing to send to /api/transcribe...");
         try {
           console.log("FormData contents:", {
@@ -180,6 +183,8 @@ export default function Home() {
             description: error instanceof Error ? error.message : "Failed to transcribe audio",
             variant: "destructive",
           });
+        } finally {
+          setIsProcessing(false);
         }
       };
 
@@ -227,6 +232,8 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-white dark:bg-gray-900">
+      {isProcessing && <Loader />}
+      
       <div className="fixed top-6 right-6">
         <NotesDrawer 
           notes={notes} 
