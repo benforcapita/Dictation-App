@@ -5,13 +5,25 @@ import { cn } from "@/lib/utils";
 
 interface RecordButtonProps {
   isRecording: boolean;
-  onClick: () => void;
+  onStart: () => void;
+  onStop: () => void;
 }
 
-export function RecordButton({ isRecording, onClick }: RecordButtonProps) {
+export function RecordButton({ isRecording, onStart, onStop }: RecordButtonProps) {
+  const handleClick = () => {
+    console.log("Record button clicked, isRecording:", isRecording);
+    if (isRecording) {
+      console.log("Calling onStop");
+      onStop();
+    } else {
+      console.log("Calling onStart");
+      onStart();
+    }
+  };
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         "w-32 h-32 rounded-full flex items-center justify-center transition-all transform hover:scale-105",
         "shadow-lg hover:shadow-xl",
