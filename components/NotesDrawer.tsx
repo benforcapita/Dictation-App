@@ -47,39 +47,40 @@ export function NotesDrawer({ notes, onClearNotes }: NotesDrawerProps) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon" className="fixed top-6 right-6">
+        <Button variant="outline" className="dark:bg-gray-800 dark:hover:bg-gray-700 fixed top-6 right-6">
           <Settings className="h-5 w-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent className="w-[400px] sm:w-[540px] dark:bg-gray-900 dark:border-gray-800">
         <SheetHeader>
-          <SheetTitle>Notes Management</SheetTitle>
+          <SheetTitle className="dark:text-white">Notes Management</SheetTitle>
         </SheetHeader>
         
         <div className="space-y-6 mt-6">
           <div className="flex flex-col gap-4">
-            <Button onClick={handleExport}>
+            <Button onClick={handleExport} className="dark:bg-gray-800 dark:hover:bg-gray-700">
               Export Notes
             </Button>
             <Button 
               variant="destructive" 
               onClick={handleClearNotes}
+              className="dark:bg-red-900 dark:hover:bg-red-800"
             >
               Clear All Notes
             </Button>
           </div>
 
           <div className="space-y-4">
-            <h3 className="font-semibold">All Notes ({notes.length})</h3>
-            <ScrollArea className="h-[500px]">
+            <h3 className="font-semibold dark:text-white">All Notes ({notes.length})</h3>
+            <ScrollArea className="h-[500px] dark:bg-gray-900">
               <div className="space-y-4 pr-4">
                 {notes.map((note) => (
                   <div
                     key={note.id}
-                    className="p-4 rounded-lg border bg-muted"
+                    className="p-4 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-800"
                   >
-                    <p className="mb-2 text-sm">{note.text}</p>
-                    <time className="text-xs text-muted-foreground">
+                    <p className="mb-2 text-sm dark:text-gray-100">{note.text}</p>
+                    <time className="text-xs text-muted-foreground dark:text-gray-400">
                       {new Date(note.timestamp).toLocaleString()}
                     </time>
                   </div>

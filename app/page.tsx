@@ -226,7 +226,7 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+    <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-white dark:bg-gray-900">
       <div className="fixed top-6 right-6">
         <NotesDrawer 
           notes={notes} 
@@ -238,13 +238,13 @@ export default function Home() {
       </div>
 
       <div className="flex flex-col items-center gap-4">
-        <h1 className="text-2xl font-bold mb-4">Voice Notes</h1>
+        <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Voice Notes</h1>
         <RecordButton 
           isRecording={isRecording} 
           onStart={startRecording} 
           onStop={stopRecording}
         />
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {isRecording ? "Click to stop recording" : "Click to start recording"}
         </p>
       </div>
